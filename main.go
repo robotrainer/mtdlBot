@@ -4,8 +4,18 @@ import (
 	"fmt"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
+	"strconv"
 	"strings"
 )
+
+type todo struct {
+	title     string
+	completed bool
+}
+
+type todos map[int]todo
+
+var db = map[int]todos{}
 
 func main() {
 	bot, err := tgbotapi.NewBotAPI("")
@@ -28,19 +38,41 @@ func main() {
 		}
 
 		word := strings.Fields(update.Message.Text)
-		fmt.Println(word)
+		userId := update.Message.From.ID
 
 		switch word[0] {
 		case "ADD":
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда ADD"))
+			if _, ok := db[userId]; !ok {
+				db[userId] = make(todos)
+			}
+			messageId := len(db[userId]) + 1
+			newMsg := strings.Replace(update.Message.Text, "ADD ", "", 1)
+			db[userId][messageId] = todo{newMsg, false}
+			// bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда ADD"))
 		case "RM":
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда RM"))
+			id, err := strconv.Atoi(word[1])
+			if err != nil {
+				bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
+			}
+			delete(db[userId], id)
+			for _id, _ := range db[userId] {
+				if _id > id {
+					db[userId][id] = db[userId][_id]
+					id = _id
+				}
+			}
+			// bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда RM"))
 		case "TG":
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда TG"))
 		case "CL":
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда CL"))
 		case "ALL":
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда ALL"))
+			msg := ""
+			for id, message := range db[userId] {
+				msg += fmt.Sprintf("%v %s %t\n", id, message.title, message.completed)
+			}
+			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
+			fmt.Println(db)
 		default:
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Неизвестная команда"))
 		}
