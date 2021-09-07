@@ -82,24 +82,33 @@ func main() {
 			}
 			// bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "🤩"))
 		case "CL":
+			db[0] = make(todos)
 			for _id, message := range db[userId] {
 				if message.completed {
 					delete(db[userId], _id)
 				}
 			}
+			fmt.Println(db)
 			i := 1
 			for _id, _ := range db[userId] {
-				db[userId][i] = db[userId][_id]
+				db[0][i] = db[userId][_id]
 				i++
+			}
+			db[userId] = make(todos)
+			l := len(db[0])
+			for i := 1; i <= l; i++ {
+				db[userId][i] = db[0][i]
+				delete(db[0], i)
 			}
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда CL"))
 		case "ALL":
-			for id, message := range db[userId] {
+			msg = ""
+			for i := 1; i <= len(db[userId]); i++ {
 				emoji := "🔴"
-				if message.completed {
+				if db[userId][i].completed {
 					emoji = "🟢"
 				}
-				msg += fmt.Sprintf("%s %v. %s\n", emoji, id, message.title)
+				msg += fmt.Sprintf("%s %v. %s\n", emoji, i, db[userId][i].title)
 			}
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
 			fmt.Println(db)
