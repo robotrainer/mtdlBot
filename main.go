@@ -19,7 +19,7 @@ type todos map[int]todo
 var db = map[int]todos{}
 
 func main() {
-	bot, err := tgbotapi.NewBotAPI("1993669332:AAECB5_FyzH0RUpn_Md9dVBw9Fwh2yk6BHI")
+	bot, err := tgbotapi.NewBotAPI("")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -50,7 +50,6 @@ func main() {
 			messageId := len(db[userId]) + 1
 			newMsg := strings.Replace(update.Message.Text, "ADD ", "", 1)
 			db[userId][messageId] = todo{newMsg, false}
-			// bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда ADD"))
 		case "RM":
 			id, err := strconv.Atoi(word[1])
 			if err != nil {
@@ -80,27 +79,21 @@ func main() {
 					db[userId][_id] = message
 				}
 			}
-			// bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "🤩"))
+			msg = fmt.Sprintf("Дело %v выполнено.", id)
+			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
 		case "CL":
 			db[0] = make(todos)
+			i := 1
 			for _id, message := range db[userId] {
-				if message.completed {
-					delete(db[userId], _id)
+				if !message.completed {
+					db[0][i] = db[userId][_id]
+					i++
 				}
 			}
-			fmt.Println(db)
-			i := 1
-			for _id, _ := range db[userId] {
-				db[0][i] = db[userId][_id]
-				i++
-			}
 			db[userId] = make(todos)
-			l := len(db[0])
-			for i := 1; i <= l; i++ {
-				db[userId][i] = db[0][i]
-				delete(db[0], i)
-			}
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда CL"))
+			db[userId] = db[0]
+			delete(db, 0)
+			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Список очищен"))
 		case "ALL":
 			msg = ""
 			for i := 1; i <= len(db[userId]); i++ {
