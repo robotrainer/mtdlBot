@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	"strconv"
 	"strings"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 type todo struct {
@@ -18,7 +19,7 @@ type todos map[int]todo
 var db = map[int]todos{}
 
 func main() {
-	bot, err := tgbotapi.NewBotAPI("")
+	bot, err := tgbotapi.NewBotAPI("1993669332:AAECB5_FyzH0RUpn_Md9dVBw9Fwh2yk6BHI")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -39,6 +40,7 @@ func main() {
 
 		word := strings.Fields(update.Message.Text)
 		userId := update.Message.From.ID
+		msg := ""
 
 		switch word[0] {
 		case "ADD":
@@ -54,22 +56,50 @@ func main() {
 			if err != nil {
 				bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
 			}
-			delete(db[userId], id)
-			for _id, _ := range db[userId] {
-				if _id > id {
-					db[userId][id] = db[userId][_id]
-					id = _id
+			if id <= len(db[userId]) && id > 0 {
+				for _id, _ := range db[userId] {
+					if _id > id {
+						db[userId][id] = db[userId][_id]
+						id = _id
+					}
+				}
+				delete(db[userId], id)
+				msg = fmt.Sprintf("Дело %v удалено.", word[1])
+			} else {
+				msg = "Такое дело не существует."
+			}
+			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
+		case "TG":
+			id, err := strconv.Atoi(word[1])
+			if err != nil {
+				bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
+			}
+			for _id, message := range db[userId] {
+				if _id == id {
+					message.completed = !message.completed
+					db[userId][_id] = message
 				}
 			}
-			// bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда RM"))
-		case "TG":
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда TG"))
+			// bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "🤩"))
 		case "CL":
+			for _id, message := range db[userId] {
+				if message.completed {
+					delete(db[userId], _id)
+				}
+			}
+			i := 1
+			for _id, _ := range db[userId] {
+				db[userId][i] = db[userId][_id]
+				i++
+			}
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Команда CL"))
 		case "ALL":
-			msg := ""
 			for id, message := range db[userId] {
-				msg += fmt.Sprintf("%v %s %t\n", id, message.title, message.completed)
+				emoji := "🔴"
+				if message.completed {
+					emoji = "🟢"
+				}
+				msg += fmt.Sprintf("%s %v. %s\n", emoji, id, message.title)
 			}
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
 			fmt.Println(db)
