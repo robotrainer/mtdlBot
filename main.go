@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"strconv"
 	"strings"
@@ -19,7 +20,11 @@ type todos map[int]todo
 var db = map[int]todos{}
 
 func main() {
-	bot, err := tgbotapi.NewBotAPI("")
+	token, err := ioutil.ReadFile("token.txt")
+	if err != nil {
+		panic(err)
+	}
+	bot, err := tgbotapi.NewBotAPI(string(token))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -32,6 +37,9 @@ func main() {
 	u.Timeout = 60
 
 	updates, err := bot.GetUpdatesChan(u)
+	if err != nil {
+		log.Panic(err)
+	}
 
 	for update := range updates {
 		if update.Message == nil { // ignore any non-Message Updates
@@ -93,7 +101,7 @@ func main() {
 			db[userId] = make(todos)
 			db[userId] = db[0]
 			delete(db, 0)
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Список очищен"))
+			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Список очищен."))
 		case "ALL":
 			msg = ""
 			for i := 1; i <= len(db[userId]); i++ {
@@ -106,7 +114,7 @@ func main() {
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
 			fmt.Println(db)
 		default:
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Неизвестная команда"))
+			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Неизвестная команда."))
 		}
 	}
 }
