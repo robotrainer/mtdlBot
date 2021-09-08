@@ -19,6 +19,11 @@ type todos map[int]todo
 
 var db = map[int]todos{}
 
+/*
+- ПЕРЕНЕСТИ ВСЕ ФУНКЦИИ В ОДЕЛЬНЫЕ ПАКЕТЫ
+- переименовать фу-ии команд
+- переписать фe-ии rm() и tg(), убрать передачу параметра *tgbotapi.BotAPI
+*/
 func getToken(filename string) string {
 	token, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -79,6 +84,7 @@ func rm(data map[int]todos, userId int, command string, bot *tgbotapi.BotAPI, up
 }
 
 func tg(data map[int]todos, userId int, command string, bot *tgbotapi.BotAPI, update tgbotapi.Update) string {
+	// добавить проверку существования такого дела
 	id, err := strconv.Atoi(command)
 	if err != nil {
 		bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
@@ -90,6 +96,35 @@ func tg(data map[int]todos, userId int, command string, bot *tgbotapi.BotAPI, up
 		}
 	}
 	msg := fmt.Sprintf("Статус дела %v изменён.", id)
+	return msg
+}
+
+func cl(data map[int]todos, userId int) {
+	//сделать проверку на наличие выполненных дел
+	data[0] = make(todos)
+	// возможно, перенести в функцию копирования карты
+	i := 1
+	for _id, message := range data[userId] {
+		if !message.completed {
+			data[0][i] = data[userId][_id]
+			i++
+		}
+	}
+	data[userId] = make(todos)
+	data[userId] = data[0]
+	delete(data, 0)
+}
+
+func all(data map[int]todos, userId int) string {
+	//добавить проверку на сущестование списка дела
+	msg := ""
+	for i := 1; i <= len(db[userId]); i++ {
+		emoji := "🔴"
+		if db[userId][i].completed {
+			emoji = "🟢"
+		}
+		msg += fmt.Sprintf("%s %v. %s\n", emoji, i, db[userId][i].title)
+	}
 	return msg
 }
 
@@ -108,32 +143,16 @@ func main() {
 			add(db, userId, update)
 		case "rm":
 			msg := rm(db, userId, command[1], bot, update)
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
+			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg)) //сделать одинарный вызов bot.Send(...)
 		case "tg":
 			msg := tg(db, userId, command[1], bot, update)
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
 		case "cl":
-			db[0] = make(todos)
-			i := 1
-			for _id, message := range db[userId] {
-				if !message.completed {
-					db[0][i] = db[userId][_id]
-					i++
-				}
-			}
-			db[userId] = make(todos)
-			db[userId] = db[0]
-			delete(db, 0)
+			cl(db, userId)
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Список очищен."))
 		case "all":
-			msg := ""
-			for i := 1; i <= len(db[userId]); i++ {
-				emoji := "🔴"
-				if db[userId][i].completed {
-					emoji = "🟢"
-				}
-				msg += fmt.Sprintf("%s %v. %s\n", emoji, i, db[userId][i].title)
-			}
+			//сделать автоматический вызов фу-ии all() после выполнения любой команды
+			msg := all(db, userId)
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
 			fmt.Println(db)
 		default:
