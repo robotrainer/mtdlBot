@@ -78,6 +78,21 @@ func rm(data map[int]todos, userId int, command string, bot *tgbotapi.BotAPI, up
 	return msg
 }
 
+func tg(data map[int]todos, userId int, command string, bot *tgbotapi.BotAPI, update tgbotapi.Update) string {
+	id, err := strconv.Atoi(command)
+	if err != nil {
+		bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
+	}
+	for _id, message := range data[userId] {
+		if _id == id {
+			message.completed = !message.completed
+			data[userId][_id] = message
+		}
+	}
+	msg := fmt.Sprintf("Статус дела %v изменён.", id)
+	return msg
+}
+
 func main() {
 	bot, updates := initBot()
 	for update := range updates {
@@ -87,7 +102,6 @@ func main() {
 
 		command := strings.Fields(update.Message.Text)
 		userId := update.Message.From.ID
-		msg := ""
 
 		switch command[0] {
 		case "add":
@@ -96,17 +110,7 @@ func main() {
 			msg := rm(db, userId, command[1], bot, update)
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
 		case "tg":
-			id, err := strconv.Atoi(command[1])
-			if err != nil {
-				bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
-			}
-			for _id, message := range db[userId] {
-				if _id == id {
-					message.completed = !message.completed
-					db[userId][_id] = message
-				}
-			}
-			msg = fmt.Sprintf("Дело %v выполнено.", id)
+			msg := tg(db, userId, command[1], bot, update)
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
 		case "cl":
 			db[0] = make(todos)
@@ -122,7 +126,7 @@ func main() {
 			delete(db, 0)
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Список очищен."))
 		case "all":
-			msg = ""
+			msg := ""
 			for i := 1; i <= len(db[userId]); i++ {
 				emoji := "🔴"
 				if db[userId][i].completed {
