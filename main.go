@@ -47,13 +47,35 @@ func initBot() (*tgbotapi.BotAPI, tgbotapi.UpdatesChannel) {
 	return bot, updates
 }
 
-func add(d map[int]todos, userId int, t tgbotapi.Update) {
-	if _, ok := d[userId]; !ok {
-		d[userId] = make(todos)
+func add(data map[int]todos, userId int, update tgbotapi.Update) {
+	if _, ok := data[userId]; !ok {
+		data[userId] = make(todos)
 	}
-	messageId := len(d[userId]) + 1
-	newMsg := strings.Replace(t.Message.Text, "add ", "", 1)
-	d[userId][messageId] = todo{newMsg, false}
+	messageId := len(data[userId]) + 1
+	newMessage := strings.Replace(update.Message.Text, "add ", "", 1)
+	data[userId][messageId] = todo{newMessage, false}
+}
+
+func rm(data map[int]todos, userId int, command string, bot *tgbotapi.BotAPI, update tgbotapi.Update) string {
+	msg := ""
+	id, err := strconv.Atoi(command)
+	if err != nil {
+		bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
+	}
+	if id <= len(data[userId]) && id > 0 {
+		// возможно, переписать в функцию неполного смещения
+		for _id, _ := range data[userId] {
+			if _id > id {
+				data[userId][id] = data[userId][_id]
+				id = _id
+			}
+		}
+		delete(data[userId], id)
+		msg = fmt.Sprintf("Дело %v удалено.", command)
+	} else {
+		msg = "Такое дело не существует."
+	}
+	return msg
 }
 
 func main() {
@@ -63,33 +85,18 @@ func main() {
 			continue
 		}
 
-		word := strings.Fields(update.Message.Text)
+		command := strings.Fields(update.Message.Text)
 		userId := update.Message.From.ID
 		msg := ""
 
-		switch word[0] {
+		switch command[0] {
 		case "add":
 			add(db, userId, update)
 		case "rm":
-			id, err := strconv.Atoi(word[1])
-			if err != nil {
-				bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
-			}
-			if id <= len(db[userId]) && id > 0 {
-				for _id, _ := range db[userId] {
-					if _id > id {
-						db[userId][id] = db[userId][_id]
-						id = _id
-					}
-				}
-				delete(db[userId], id)
-				msg = fmt.Sprintf("Дело %v удалено.", word[1])
-			} else {
-				msg = "Такое дело не существует."
-			}
+			msg := rm(db, userId, command[1], bot, update)
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
 		case "tg":
-			id, err := strconv.Atoi(word[1])
+			id, err := strconv.Atoi(command[1])
 			if err != nil {
 				bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
 			}
