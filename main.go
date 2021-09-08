@@ -19,12 +19,16 @@ type todos map[int]todo
 
 var db = map[int]todos{}
 
-func main() {
-	token, err := ioutil.ReadFile("token.txt")
+func getToken(filename string) string {
+	token, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)
 	}
-	bot, err := tgbotapi.NewBotAPI(string(token))
+	return string(token)
+}
+
+func initBot() (*tgbotapi.BotAPI, tgbotapi.UpdatesChannel) {
+	bot, err := tgbotapi.NewBotAPI(getToken("token.txt"))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -40,7 +44,20 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+	return bot, updates
+}
 
+func add(d map[int]todos, userId int, t tgbotapi.Update) {
+	if _, ok := d[userId]; !ok {
+		d[userId] = make(todos)
+	}
+	messageId := len(d[userId]) + 1
+	newMsg := strings.Replace(t.Message.Text, "add ", "", 1)
+	d[userId][messageId] = todo{newMsg, false}
+}
+
+func main() {
+	bot, updates := initBot()
 	for update := range updates {
 		if update.Message == nil { // ignore any non-Message Updates
 			continue
@@ -51,14 +68,9 @@ func main() {
 		msg := ""
 
 		switch word[0] {
-		case "ADD":
-			if _, ok := db[userId]; !ok {
-				db[userId] = make(todos)
-			}
-			messageId := len(db[userId]) + 1
-			newMsg := strings.Replace(update.Message.Text, "ADD ", "", 1)
-			db[userId][messageId] = todo{newMsg, false}
-		case "RM":
+		case "add":
+			add(db, userId, update)
+		case "rm":
 			id, err := strconv.Atoi(word[1])
 			if err != nil {
 				bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
@@ -76,7 +88,7 @@ func main() {
 				msg = "Такое дело не существует."
 			}
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
-		case "TG":
+		case "tg":
 			id, err := strconv.Atoi(word[1])
 			if err != nil {
 				bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
@@ -89,7 +101,7 @@ func main() {
 			}
 			msg = fmt.Sprintf("Дело %v выполнено.", id)
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
-		case "CL":
+		case "cl":
 			db[0] = make(todos)
 			i := 1
 			for _id, message := range db[userId] {
@@ -102,7 +114,7 @@ func main() {
 			db[userId] = db[0]
 			delete(db, 0)
 			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Список очищен."))
-		case "ALL":
+		case "all":
 			msg = ""
 			for i := 1; i <= len(db[userId]); i++ {
 				emoji := "🔴"
