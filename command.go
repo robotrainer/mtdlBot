@@ -15,8 +15,6 @@ type todo struct {
 
 type todos map[int]todo
 
-var db = map[int]todos{}
-
 func AddTodo(data map[int]todos, userId int, update tgbotapi.Update) {
 	if _, ok := data[userId]; !ok {
 		data[userId] = make(todos)
@@ -83,12 +81,12 @@ func CleanTodoList(data map[int]todos, userId int) {
 func AllTodoList(data map[int]todos, userId int) string {
 	//добавить проверку на непустой списка дела
 	msg := ""
-	for i := 1; i <= len(db[userId]); i++ {
+	for i := 1; i <= len(data[userId]); i++ {
 		emoji := "🔴"
-		if db[userId][i].completed {
+		if data[userId][i].completed {
 			emoji = "🟢"
 		}
-		msg += fmt.Sprintf("%s %v. %s\n", emoji, i, db[userId][i].title)
+		msg += fmt.Sprintf("%s %v. %s\n", emoji, i, data[userId][i].title)
 	}
 	return msg
 }
