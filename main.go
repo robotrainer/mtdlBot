@@ -116,7 +116,7 @@ func cl(data map[int]todos, userId int) {
 }
 
 func all(data map[int]todos, userId int) string {
-	//добавить проверку на сущестование списка дела
+	//добавить проверку на непустой списка дела
 	msg := ""
 	for i := 1; i <= len(db[userId]); i++ {
 		emoji := "🔴"
