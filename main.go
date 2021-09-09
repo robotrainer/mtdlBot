@@ -8,12 +8,11 @@ import (
 )
 
 /*
-- ПЕРЕНЕСТИ ВСЕ ФУНКЦИИ В ОДЕЛЬНЫЕ ПАКЕТЫ
-- переименовать фу-ии команд
 - переписать фe-ии rm() и tg(), убрать передачу параметра *tgbotapi.BotAPI
 */
 
 func main() {
+	var db = map[int]todos{}
 	bot, updates := InitBot()
 	for update := range updates {
 		if update.Message == nil { // ignore any non-Message Updates
