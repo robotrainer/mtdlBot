@@ -21,26 +21,30 @@ func main() {
 
 		command := strings.Fields(update.Message.Text)
 		userId := update.Message.From.ID
+		msg := ""
 
 		switch command[0] {
 		case "add":
 			AddTodo(db, userId, update)
+			msg = AllTodoList(db, userId)
 		case "rm":
-			msg := RemoveTodo(db, userId, command[1], bot, update)
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg)) //сделать одинарный вызов bot.Send(...)
+			msg = RemoveTodo(db, userId, command[1])
+			msg += "\n" + AllTodoList(db, userId)
 		case "tg":
-			msg := ToggleTodo(db, userId, command[1], bot, update)
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
+			msg = ToggleTodo(db, userId, command[1])
+			msg += "\n" + AllTodoList(db, userId)
 		case "cl":
-			CleanTodoList(db, userId)
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Список очищен."))
+			CleanTodoList(db, userId) //добавить возвращаемое значение в фу-ию CleanTodoList()
+			msg = AllTodoList(db, userId)
 		case "all":
 			//сделать автоматический вызов фу-ии all() после выполнения любой команды
-			msg := AllTodoList(db, userId)
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, msg))
-			fmt.Println(db)
+			msg = AllTodoList(db, userId)
 		default:
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Неизвестная команда."))
+			msg = "<i>Неизвестная команда.</i>"
 		}
+		fmt.Println(db)
+		msgParse := tgbotapi.NewMessage(update.Message.Chat.ID, msg)
+		msgParse.ParseMode = tgbotapi.ModeHTML
+		bot.Send(msgParse)
 	}
 }

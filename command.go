@@ -24,13 +24,12 @@ func AddTodo(data map[int]todos, userId int, update tgbotapi.Update) {
 	data[userId][messageId] = todo{newMessage, false}
 }
 
-func RemoveTodo(data map[int]todos, userId int, command string, bot *tgbotapi.BotAPI, update tgbotapi.Update) string {
+func RemoveTodo(data map[int]todos, userId int, command string) string {
 	msg := ""
 	id, err := strconv.Atoi(command)
 	if err != nil {
-		bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
-	}
-	if id <= len(data[userId]) && id > 0 {
+		msg = err.Error()
+	} else if id <= len(data[userId]) && id > 0 {
 		// возможно, переписать в функцию неполного смещения
 		for _id, _ := range data[userId] {
 			if _id > id {
@@ -46,19 +45,21 @@ func RemoveTodo(data map[int]todos, userId int, command string, bot *tgbotapi.Bo
 	return msg
 }
 
-func ToggleTodo(data map[int]todos, userId int, command string, bot *tgbotapi.BotAPI, update tgbotapi.Update) string {
+func ToggleTodo(data map[int]todos, userId int, command string) string {
 	// добавить проверку существования такого дела
+	msg := ""
 	id, err := strconv.Atoi(command)
 	if err != nil {
-		bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, err.Error()))
-	}
-	for _id, message := range data[userId] {
-		if _id == id {
-			message.completed = !message.completed
-			data[userId][_id] = message
+		msg = err.Error()
+	} else {
+		for _id, message := range data[userId] {
+			if _id == id {
+				message.completed = !message.completed
+				data[userId][_id] = message
+			}
 		}
+		msg = fmt.Sprintf("Статус дела %v изменён.", id)
 	}
-	msg := fmt.Sprintf("Статус дела %v изменён.", id)
 	return msg
 }
 
@@ -80,7 +81,7 @@ func CleanTodoList(data map[int]todos, userId int) {
 
 func AllTodoList(data map[int]todos, userId int) string {
 	//добавить проверку на непустой списка дела
-	msg := ""
+	msg := "<s>MyTodoList!</s>\n"
 	for i := 1; i <= len(data[userId]); i++ {
 		emoji := "🔴"
 		if data[userId][i].completed {
