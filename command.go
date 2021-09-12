@@ -15,13 +15,18 @@ type todo struct {
 
 type todos map[int]todo
 
-func AddTodo(data map[int]todos, userId int, update tgbotapi.Update) {
+func AddTodo(data map[int]todos, userId int, update tgbotapi.Update) string {
+	msg := ""
 	if _, ok := data[userId]; !ok {
 		data[userId] = make(todos)
 	}
 	messageId := len(data[userId]) + 1
-	newMessage := strings.Replace(update.Message.Text, "add ", "", 1)
-	data[userId][messageId] = todo{newMessage, false}
+	newMessage := strings.Replace(update.Message.Text, "add", "", 1)
+	if newMessage != "" {
+		msg = "<i>ℹ️ Дело добавлено.</i>"
+		data[userId][messageId] = todo{newMessage, false}
+	}
+	return msg
 }
 
 func RemoveTodo(data map[int]todos, userId int, command string) string {
@@ -38,9 +43,9 @@ func RemoveTodo(data map[int]todos, userId int, command string) string {
 			}
 		}
 		delete(data[userId], id)
-		msg = fmt.Sprintf("Дело %v удалено.", command)
+		msg = fmt.Sprintf("<i>ℹ️ Дело %v удалено.</i>", command)
 	} else {
-		msg = "Такое дело не существует."
+		msg = "<i>ℹ️ Такое дело не существует.</i>"
 	}
 	return msg
 }
@@ -58,12 +63,13 @@ func ToggleTodo(data map[int]todos, userId int, command string) string {
 				data[userId][_id] = message
 			}
 		}
-		msg = fmt.Sprintf("Статус дела %v изменён.", id)
+		msg = fmt.Sprintf("<i>ℹ️ Статус дела %v изменён.</i>", id)
 	}
 	return msg
 }
 
-func CleanTodoList(data map[int]todos, userId int) {
+func CleanTodoList(data map[int]todos, userId int) string {
+	msg := ""
 	//сделать проверку на наличие выполненных дел
 	data[0] = make(todos)
 	// возможно, перенести в функцию копирования карты
@@ -77,16 +83,25 @@ func CleanTodoList(data map[int]todos, userId int) {
 	data[userId] = make(todos)
 	data[userId] = data[0]
 	delete(data, 0)
+	msg = "<i>ℹ️ Список очищен.</i>"
+	return msg
 }
 
 func AllTodoList(data map[int]todos, userId int) string {
 	//добавить проверку на непустой списка дела
-	msg := "<s>MyTodoList!</s>\n"
+	msg := "<b>MyTodoList</b>\n"
+	emoji := ""
+	title := ""
 	for i := 1; i <= len(data[userId]); i++ {
-		emoji := "🔴"
 		if data[userId][i].completed {
 			emoji = "🟢"
+			title = "<s>" + data[userId][i].title + "</s>"
+		} else {
+			emoji = "🔴"
+			replacer := strings.NewReplacer("<s>", "", "</s>", "")
+			title = replacer.Replace(data[userId][i].title)
 		}
+		data[userId][i] = todo{title, data[userId][i].completed}
 		msg += fmt.Sprintf("%s %v. %s\n", emoji, i, data[userId][i].title)
 	}
 	return msg
