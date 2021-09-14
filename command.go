@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -85,22 +87,48 @@ func AddTodo(collection *mongo.Collection, userId int, update tgbotapi.Update) {
 // 	return msg
 // }
 
-// func AllTodoList(data map[int]todos, userId int) string {
-// 	//добавить проверку на непустой списка дела
-// 	msg := "<b>MyTodoList</b>\n"
-// 	emoji := ""
-// 	title := ""
-// 	for i := 1; i <= len(data[userId]); i++ {
-// 		if data[userId][i].completed {
-// 			emoji = "🟢"
-// 			title = "<s>" + data[userId][i].title + "</s>"
-// 		} else {
-// 			emoji = "🔴"
-// 			replacer := strings.NewReplacer("<s>", "", "</s>", "")
-// 			title = replacer.Replace(data[userId][i].title)
-// 		}
-// 		data[userId][i] = todo{title, data[userId][i].completed}
-// 		msg += fmt.Sprintf("%s %v. %s\n", emoji, i, data[userId][i].title)
-// 	}
-// 	return msg
-// }
+func AllTodoList(collection *mongo.Collection, userId int) []*Todo {
+	filter := bson.M{}
+	filter["userid"] = userId
+
+	var results []*Todo
+
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	cur, err := collection.Find(ctx, filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for cur.Next(ctx) {
+		var elem Todo
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, &elem)
+	}
+
+	if err := cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	cur.Close(ctx)
+	return results
+}
+
+func PrintTodoList(todoList []*Todo) string {
+	msg := "<b>MyTodoList</b>\n"
+	emoji := ""
+	title := ""
+	for i := 0; i < len(todoList); i++ {
+		if todoList[i].Completed {
+			emoji = "🟢"
+			title = "<s>" + todoList[i].Title + "</s>"
+		} else {
+			emoji = "🔴"
+			title = todoList[i].Title
+		}
+		msg += fmt.Sprintf("%s %v. %s\n", emoji, i+1, title)
+	}
+	return msg
+}

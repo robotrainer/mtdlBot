@@ -76,8 +76,9 @@ func main() {
 		// case "cl":
 		// 	msg = CleanTodoList(db, userId) //добавить возвращаемое значение в фу-ию CleanTodoList()
 		// 	msg += "\n\n" + AllTodoList(db, userId)
-		// case "all":
-		// 	AllTodoList(collection, userId)
+		case "all":
+			results := AllTodoList(collection, userId)
+			msg = PrintTodoList(results)
 		default:
 			msg = "<i>ℹ️ Неизвестная команда.</i>"
 		}
