@@ -67,9 +67,9 @@ func main() {
 			// if msg != "" {
 			// 	msg += "\n\n" + AllTodoList(db, userId)
 			// }
-		// case "rm":
-		// 	msg = RemoveTodo(db, userId, command[1])
-		// 	msg += "\n\n" + AllTodoList(db, userId)
+		case "rm":
+			RemoveTodo(collection, userId, command[1])
+			// msg += "\n\n" + AllTodoList(db, userId)
 		// case "tg":
 		// 	msg = ToggleTodo(db, userId, command[1])
 		// 	msg += "\n\n" + AllTodoList(db, userId)
@@ -77,8 +77,7 @@ func main() {
 		// 	msg = CleanTodoList(db, userId) //добавить возвращаемое значение в фу-ию CleanTodoList()
 		// 	msg += "\n\n" + AllTodoList(db, userId)
 		case "all":
-			results := AllTodoList(collection, userId)
-			msg = PrintTodoList(results)
+			msg = PrintTodoList(AllTodoList(collection, userId))
 		default:
 			msg = "<i>ℹ️ Неизвестная команда.</i>"
 		}

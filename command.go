@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,26 +30,22 @@ func AddTodo(collection *mongo.Collection, userId int, update tgbotapi.Update) {
 	}
 }
 
-// func RemoveTodo(data map[int]todos, userId int, command string) string {
-// 	msg := ""
-// 	id, err := strconv.Atoi(command)
-// 	if err != nil {
-// 		msg = err.Error()
-// 	} else if id <= len(data[userId]) && id > 0 {
-// 		// возможно, переписать в функцию неполного смещения
-// 		for _id, _ := range data[userId] {
-// 			if _id > id {
-// 				data[userId][id] = data[userId][_id]
-// 				id = _id
-// 			}
-// 		}
-// 		delete(data[userId], id)
-// 		msg = fmt.Sprintf("<i>ℹ️ Дело %v удалено.</i>", command)
-// 	} else {
-// 		msg = "<i>ℹ️ Такое дело не существует.</i>"
-// 	}
-// 	return msg
-// }
+func RemoveTodo(collection *mongo.Collection, userId int, index string) {
+	i, err := strconv.Atoi(index)
+	if err != nil {
+		log.Fatal(err)
+	}
+	todoList := AllTodoList(collection, userId)
+	removeTodo := todoList[i-1].Title
+	filter := bson.M{}
+	filter["userid"] = userId
+	filter["title"] = removeTodo
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	_, err = collection.DeleteOne(ctx, filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 // func ToggleTodo(data map[int]todos, userId int, command string) string {
 // 	// добавить проверку существования такого дела
