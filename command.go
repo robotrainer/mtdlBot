@@ -31,6 +31,7 @@ func AddTodo(collection *mongo.Collection, userId int, update tgbotapi.Update) {
 }
 
 func RemoveTodo(collection *mongo.Collection, userId int, index string) {
+	// добавить проверку существования index дела
 	i, err := strconv.Atoi(index)
 	if err != nil {
 		log.Fatal(err)
@@ -47,23 +48,25 @@ func RemoveTodo(collection *mongo.Collection, userId int, index string) {
 	}
 }
 
-// func ToggleTodo(data map[int]todos, userId int, command string) string {
-// 	// добавить проверку существования такого дела
-// 	msg := ""
-// 	id, err := strconv.Atoi(command)
-// 	if err != nil {
-// 		msg = err.Error()
-// 	} else {
-// 		for _id, message := range data[userId] {
-// 			if _id == id {
-// 				message.completed = !message.completed
-// 				data[userId][_id] = message
-// 			}
-// 		}
-// 		msg = fmt.Sprintf("<i>ℹ️ Статус дела %v изменён.</i>", id)
-// 	}
-// 	return msg
-// }
+func ToggleTodo(collection *mongo.Collection, userId int, index string) {
+	// добавить проверку существования index дела
+	i, err := strconv.Atoi(index)
+	if err != nil {
+		log.Fatal(err)
+	}
+	todoList := AllTodoList(collection, userId)
+	toggleTodo := todoList[i-1]
+	filter := bson.M{}
+	filter["userid"] = userId
+	filter["title"] = toggleTodo.Title
+	update := bson.M{"$set": bson.M{"completed": !toggleTodo.Completed}}
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	result, err := collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%v %v\n", result.MatchedCount, result.ModifiedCount)
+}
 
 // func CleanTodoList(data map[int]todos, userId int) string {
 // 	msg := ""

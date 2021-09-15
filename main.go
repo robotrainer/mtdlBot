@@ -70,8 +70,8 @@ func main() {
 		case "rm":
 			RemoveTodo(collection, userId, command[1])
 			// msg += "\n\n" + AllTodoList(db, userId)
-		// case "tg":
-		// 	msg = ToggleTodo(db, userId, command[1])
+		case "tg":
+			ToggleTodo(collection, userId, command[1])
 		// 	msg += "\n\n" + AllTodoList(db, userId)
 		// case "cl":
 		// 	msg = CleanTodoList(db, userId) //добавить возвращаемое значение в фу-ию CleanTodoList()
