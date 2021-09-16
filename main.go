@@ -73,8 +73,8 @@ func main() {
 		case "tg":
 			ToggleTodo(collection, userId, command[1])
 		// 	msg += "\n\n" + AllTodoList(db, userId)
-		// case "cl":
-		// 	msg = CleanTodoList(db, userId) //добавить возвращаемое значение в фу-ию CleanTodoList()
+		case "cl":
+			CleanTodoList(collection, userId) //добавить возвращаемое значение в фу-ию CleanTodoList()
 		// 	msg += "\n\n" + AllTodoList(db, userId)
 		case "all":
 			msg = PrintTodoList(AllTodoList(collection, userId))

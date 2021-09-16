@@ -68,24 +68,16 @@ func ToggleTodo(collection *mongo.Collection, userId int, index string) {
 	fmt.Printf("%v %v\n", result.MatchedCount, result.ModifiedCount)
 }
 
-// func CleanTodoList(data map[int]todos, userId int) string {
-// 	msg := ""
-// 	//сделать проверку на наличие выполненных дел
-// 	data[0] = make(todos)
-// 	// возможно, перенести в функцию копирования карты
-// 	i := 1
-// 	for _id, message := range data[userId] {
-// 		if !message.completed {
-// 			data[0][i] = data[userId][_id]
-// 			i++
-// 		}
-// 	}
-// 	data[userId] = make(todos)
-// 	data[userId] = data[0]
-// 	delete(data, 0)
-// 	msg = "<i>ℹ️ Список очищен.</i>"
-// 	return msg
-// }
+func CleanTodoList(collection *mongo.Collection, userId int) {
+	filter := bson.M{}
+	filter["userid"] = userId
+	filter["completed"] = true
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	_, err := collection.DeleteMany(ctx, filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func AllTodoList(collection *mongo.Collection, userId int) []*Todo {
 	filter := bson.M{}
