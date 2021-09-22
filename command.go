@@ -19,56 +19,70 @@ type Todo struct {
 	Completed bool
 }
 
-func AddTodo(collection *mongo.Collection, userId int, update tgbotapi.Update) {
+func AddTodo(collection *mongo.Collection, userId int, update tgbotapi.Update) string {
+	msg := ""
 	title := strings.Replace(update.Message.Text, "add", "", 1)
 	if title != "" {
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		_, err := collection.InsertOne(ctx, Todo{userId, title, false}) // добавить новое поле index и возвращать его значение
+		_, err := collection.InsertOne(ctx, Todo{userId, title, false})
 		if err != nil {
 			log.Fatal(err)
 		}
+	} else {
+		msg = "<i>❗Неверно написано дело.\n\n</i>"
 	}
+	return msg
 }
 
-func RemoveTodo(collection *mongo.Collection, userId int, index string) {
+func RemoveTodo(collection *mongo.Collection, userId int, index string) string {
 	// добавить проверку существования index дела
-	i, err := strconv.Atoi(index)
-	if err != nil {
-		log.Fatal(err)
+	msg := ""
+	count := GetCountTodos(collection, userId)
+	i, _ := strconv.Atoi(index)
+	if i > 0 && i <= int(count) {
+		todoList := AllTodoList(collection, userId)
+		removeTodo := todoList[i-1].Title
+		filter := bson.M{"userid": userId, "title": removeTodo}
+		// filter["userid"] = userId
+		// filter["title"] = removeTodo
+		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+		_, err := collection.DeleteOne(ctx, filter)
+		if err != nil {
+			log.Fatal(err)
+		}
+		msg = "<i>Дело удалено.\n\n</i>"
+	} else {
+		msg = "<i>❗Такое дело не существует.\n\n</i>"
 	}
-	todoList := AllTodoList(collection, userId)
-	removeTodo := todoList[i-1].Title
-	filter := bson.M{"userid": userId, "title": removeTodo}
-	// filter["userid"] = userId
-	// filter["title"] = removeTodo
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	_, err = collection.DeleteOne(ctx, filter)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return msg
 }
 
-func ToggleTodo(collection *mongo.Collection, userId int, index string) {
+func ToggleTodo(collection *mongo.Collection, userId int, index string) string {
 	// добавить проверку существования index дела
-	i, err := strconv.Atoi(index)
-	if err != nil {
-		log.Fatal(err)
+	msg := ""
+	count := GetCountTodos(collection, userId)
+	i, _ := strconv.Atoi(index)
+	if i > 0 && i <= int(count) {
+		todoList := AllTodoList(collection, userId)
+		toggleTodo := todoList[i-1]
+		filter := bson.M{"userid": userId, "title": toggleTodo.Title}
+		// filter["userid"] = userId
+		// filter["title"] = toggleTodo.Title
+		update := bson.M{"$set": bson.M{"completed": !toggleTodo.Completed}}
+		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+		result, err := collection.UpdateOne(ctx, filter, update)
+		if err != nil {
+			log.Fatal(err)
+		}
+		msg = "<i>Статус дела изменён.\n\n</i>"
+		fmt.Printf("%v %v\n", result.MatchedCount, result.ModifiedCount)
+	} else {
+		msg = "<i>❗Такое дело не существует.\n\n</i>"
 	}
-	todoList := AllTodoList(collection, userId)
-	toggleTodo := todoList[i-1]
-	filter := bson.M{"userid": userId, "title": toggleTodo.Title}
-	// filter["userid"] = userId
-	// filter["title"] = toggleTodo.Title
-	update := bson.M{"$set": bson.M{"completed": !toggleTodo.Completed}}
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	result, err := collection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("%v %v\n", result.MatchedCount, result.ModifiedCount)
+	return msg
 }
 
-func CleanTodoList(collection *mongo.Collection, userId int) {
+func CleanTodoList(collection *mongo.Collection, userId int) string {
 	filter := bson.M{"userid": userId, "completed": true}
 	// filter["userid"] = userId
 	// filter["completed"] = true
@@ -77,6 +91,8 @@ func CleanTodoList(collection *mongo.Collection, userId int) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	msg := "<i>TodoList очищен.\n\n</i>"
+	return msg
 }
 
 func AllTodoList(collection *mongo.Collection, userId int) []*Todo {

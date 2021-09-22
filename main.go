@@ -27,23 +27,21 @@ func main() {
 
 		switch command[0] {
 		case "add":
-			AddTodo(collection, userId, update) //добавить возвращаемое значение в фу-ию AddTodo()
-			// if msg != "" {
-			// 	msg += "\n\n" + AllTodoList(db, userId)
-			// }
+			msg = AddTodo(collection, userId, update) //добавить возвращаемое значение в фу-ию AddTodo()
+			msg += PrintTodoList(AllTodoList(collection, userId))
 		case "rm":
-			RemoveTodo(collection, userId, command[1])
-			// msg += "\n\n" + AllTodoList(db, userId)
+			msg = RemoveTodo(collection, userId, command[1])
+			msg += PrintTodoList(AllTodoList(collection, userId))
 		case "tg":
-			ToggleTodo(collection, userId, command[1])
-		// 	msg += "\n\n" + AllTodoList(db, userId)
+			msg = ToggleTodo(collection, userId, command[1])
+			msg += PrintTodoList(AllTodoList(collection, userId))
 		case "cl":
-			CleanTodoList(collection, userId) //добавить возвращаемое значение в фу-ию CleanTodoList()
-		// 	msg += "\n\n" + AllTodoList(db, userId)
+			msg = CleanTodoList(collection, userId) //добавить возвращаемое значение в фу-ию CleanTodoList()
+			msg += PrintTodoList(AllTodoList(collection, userId))
 		case "all":
 			msg = PrintTodoList(AllTodoList(collection, userId))
 		default:
-			msg = "<i>ℹ️ Неизвестная команда.</i>"
+			msg = "<i>❗Неизвестная команда.</i>"
 		}
 		fmt.Println(collection)
 		msgParse := tgbotapi.NewMessage(update.Message.Chat.ID, msg)
