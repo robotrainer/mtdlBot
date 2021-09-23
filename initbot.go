@@ -22,7 +22,8 @@ func GetURI(filename string) string {
 	if err != nil {
 		panic(err)
 	}
-	return string(uri)
+	uriRep := strings.Replace(string(uri), "\n", "", 1)
+	return uriRep
 }
 
 func InitBot() (*tgbotapi.BotAPI, tgbotapi.UpdatesChannel) {

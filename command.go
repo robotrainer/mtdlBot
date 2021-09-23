@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -38,7 +37,6 @@ func RemoveTodo(collection *mongo.Collection, userId int, index string) string {
 	// добавить проверку существования index дела
 	msg := ""
 	count := GetCountTodos(collection, userId)
-	index = strings.Replace(index, "\n", "", 1)
 	i, _ := strconv.Atoi(index)
 	if i > 0 && i <= int(count) {
 		todoList := AllTodoList(collection, userId)
@@ -62,7 +60,6 @@ func ToggleTodo(collection *mongo.Collection, userId int, index string) string {
 	// добавить проверку существования index дела
 	msg := ""
 	count := GetCountTodos(collection, userId)
-	index = strings.Replace(index, "\n", "", 1)
 	i, _ := strconv.Atoi(index)
 	if i > 0 && i <= int(count) {
 		todoList := AllTodoList(collection, userId)
