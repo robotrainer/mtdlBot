@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -12,7 +13,8 @@ func GetToken(filename string) string {
 	if err != nil {
 		panic(err)
 	}
-	return string(token)
+	tokenRep := strings.Replace(string(token), "\n", "", 1)
+	return tokenRep
 }
 
 func GetURI(filename string) string {
