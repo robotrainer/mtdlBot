@@ -17,8 +17,14 @@ func main() {
 	bot, updates := InitBot()
 
 	flag := ""
+	ferstStart := true
 
 	for update := range updates {
+		if ferstStart {
+			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Обновление @mtdlBot:\n- для добавления нового дела теперь не надо вводить команду /add, просто напиши дело и отправь его боту;\n- при вводе команды /start, бот приветсвует пользователя."))
+			ferstStart = false
+		}
+
 		if update.Message == nil {
 			continue
 		}
@@ -30,9 +36,8 @@ func main() {
 			command := update.Message.Command()
 
 			switch command {
-			case "add":
-				msg = "Напишите новое дело."
-				flag = command
+			case "start":
+				msg = fmt.Sprintf("Приветсвую тебя, %s! Пока тут нет руководства, но оно скоро появится.(надеюсь)", update.Message.From.FirstName)
 			case "rm":
 				msg = "Напишите номер удаляемого дела."
 				flag = command
@@ -47,10 +52,6 @@ func main() {
 			default:
 				msg = "<i>❗Неизвестная команда.</i>"
 			}
-		} else if flag == "add" {
-			msg = AddTodo(collection, userId, update)
-			msg += PrintTodoList(AllTodoList(collection, userId))
-			flag = ""
 		} else if flag == "rm" {
 			msg = RemoveTodo(collection, userId, update.Message.Text)
 			msg += PrintTodoList(AllTodoList(collection, userId))
@@ -60,7 +61,8 @@ func main() {
 			msg += PrintTodoList(AllTodoList(collection, userId))
 			flag = ""
 		} else {
-			msg = "<i>❗Неизвестная команда.</i>"
+			msg = AddTodo(collection, userId, update.Message.Text)
+			msg += PrintTodoList(AllTodoList(collection, userId))
 		}
 		fmt.Println(collection)
 		msgParse := tgbotapi.NewMessage(update.Message.Chat.ID, msg)

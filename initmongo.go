@@ -3,13 +3,24 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
+
+func GetURI(filename string) string {
+	uri, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	uriRep := strings.Replace(string(uri), "\n", "", 1)
+	return uriRep
+}
 
 func InitMongo() (*mongo.Client, *mongo.Collection) {
 	//Создаём нового клиента базы данных с поключением по указанному URL

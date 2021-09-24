@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -18,12 +17,11 @@ type Todo struct {
 	Completed bool
 }
 
-func AddTodo(collection *mongo.Collection, userId int, update tgbotapi.Update) string {
+func AddTodo(collection *mongo.Collection, userId int, message string) string {
 	msg := ""
-	title := update.Message.Text
-	if title != "" {
+	if message != "" {
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		_, err := collection.InsertOne(ctx, Todo{userId, title, false})
+		_, err := collection.InsertOne(ctx, Todo{userId, message, false})
 		if err != nil {
 			log.Fatal(err)
 		}

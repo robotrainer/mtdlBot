@@ -17,15 +17,6 @@ func GetToken(filename string) string {
 	return tokenRep
 }
 
-func GetURI(filename string) string {
-	uri, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
-	uriRep := strings.Replace(string(uri), "\n", "", 1)
-	return uriRep
-}
-
 func InitBot() (*tgbotapi.BotAPI, tgbotapi.UpdatesChannel) {
 	bot, err := tgbotapi.NewBotAPI(GetToken("token.txt"))
 	if err != nil {
