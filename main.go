@@ -16,15 +16,16 @@ func main() {
 
 	bot, updates := InitBot()
 
+	allUserId := GetAllUserId(collection, "userid") //Получить userid всех пользователей со списками дел для уведомлений.
+	//Сообщение об обновлении, отправляется один раз сразу после запуска сервера.
+	//При перезапуске сервера удалить строчку 22.
+	SendUpdateNotification(allUserId, bot)
+	//Отправка ежедневных уведоблений.
+	SendNotification(allUserId, bot)
+
 	flag := ""
-	ferstStart := true
 
 	for update := range updates {
-		if ferstStart {
-			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "Обновление @mtdlBot:\n- для добавления нового дела теперь не надо вводить команду /add, просто напиши дело и отправь его боту;\n- при вводе команды /start, бот приветсвует пользователя."))
-			ferstStart = false
-		}
-
 		if update.Message == nil {
 			continue
 		}
@@ -35,16 +36,23 @@ func main() {
 		if update.Message.IsCommand() && flag == "" {
 			command := update.Message.Command()
 
+			//добавить команды /help и /settings
+			//настроить комманду /start
 			switch command {
 			case "start":
-				msg = fmt.Sprintf("Приветсвую тебя, %s! Пока тут нет руководства, но оно скоро появится.(надеюсь)", update.Message.From.FirstName)
-			case "rm":
+				msg = fmt.Sprintf("Приветсвую тебя, %s! Я бот, который поможет тебе сохранять важные дела и следить за их выполнением. Пока у меня не много функций, но ты уже можешь начать пользоватьс мной. Чтобы узнать список доступных команды, введи команду /help.", update.Message.From.FirstName)
+				// добавить запоминание Chat.ID в базу данных
+			case "help":
+				msg = "Доступные команды:\nчтобы добавить дело, просто напиши его сообщением и отправ мне\n/all - показать ваш список дел\n/toggle - изменить статус указанного дела, меняет с невыполненного, на выполненное, и наоборот\n/remove - удалить указанное дело\n/clean - удалить все выполненные дела\n/start - запуск бота\n/help - справочная информация, руководство\n/settings - настроить чат-бот"
+			case "settings":
+				msg = "Тут будут доступны настройки бота. Сейчас этот раздел в разработке."
+			case "remove":
 				msg = "Напишите номер удаляемого дела."
 				flag = command
-			case "tg":
+			case "toggle":
 				msg = "Напишите номер дела."
 				flag = command
-			case "cl":
+			case "clean":
 				msg = CleanTodoList(collection, userId) //добавить возвращаемое значение в фу-ию CleanTodoList()
 				msg += PrintTodoList(AllTodoList(collection, userId))
 			case "all":
@@ -52,11 +60,11 @@ func main() {
 			default:
 				msg = "<i>❗Неизвестная команда.</i>"
 			}
-		} else if flag == "rm" {
+		} else if flag == "remove" {
 			msg = RemoveTodo(collection, userId, update.Message.Text)
 			msg += PrintTodoList(AllTodoList(collection, userId))
 			flag = ""
-		} else if flag == "tg" {
+		} else if flag == "toggle" {
 			msg = ToggleTodo(collection, userId, update.Message.Text)
 			msg += PrintTodoList(AllTodoList(collection, userId))
 			flag = ""

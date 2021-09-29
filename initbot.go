@@ -8,6 +8,8 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
+const token = "token.txt"
+
 func GetToken(filename string) string {
 	token, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -18,7 +20,7 @@ func GetToken(filename string) string {
 }
 
 func InitBot() (*tgbotapi.BotAPI, tgbotapi.UpdatesChannel) {
-	bot, err := tgbotapi.NewBotAPI(GetToken("token.txt"))
+	bot, err := tgbotapi.NewBotAPI(GetToken(token))
 	if err != nil {
 		log.Panic(err)
 	}

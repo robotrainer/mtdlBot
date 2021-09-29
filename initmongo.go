@@ -13,6 +13,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+const col = "todolist"
+const db = "mtdlBot"
+
 func GetURI(filename string) string {
 	uri, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -38,7 +41,6 @@ func InitMongo() (*mongo.Client, *mongo.Collection) {
 		log.Fatal(err)
 	}
 
-	// defer client.Disconnect(ctx) //откладываем момент отключения от базы данных
 	//проверяем подклчение
 	fmt.Println("Ping connecting...")
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second) //ждём ответа в течении 10 сек
@@ -47,14 +49,7 @@ func InitMongo() (*mongo.Client, *mongo.Collection) {
 		log.Fatal(err)
 	}
 
-	// databases, err := client.ListDatabaseNames(ctx, bson.M{})
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// fmt.Println(databases)
-
-	collection := client.Database("mtdlBot").Collection("todolist")
+	collection := client.Database(db).Collection(col)
 
 	return client, collection
 }
