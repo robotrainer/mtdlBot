@@ -19,7 +19,7 @@ func main() {
 	allUserId := GetAllUserId(collection, "userid") //Получить userid всех пользователей со списками дел для уведомлений.
 	//Сообщение об обновлении, отправляется один раз сразу после запуска сервера.
 	//При перезапуске сервера удалить строчку 22.
-	SendUpdateNotification(allUserId, bot)
+	// SendUpdateNotification(allUserId, bot)
 	//Отправка ежедневных уведоблений.
 	SendNotification(allUserId, bot)
 
