@@ -13,8 +13,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-const col = "todolist"
-const db = "mtdlBot"
+const (
+	col = "todolist_test"
+	db  = "mtdlBot"
+	URI = "uri.txt"
+)
 
 func GetURI(filename string) string {
 	uri, err := ioutil.ReadFile(filename)
@@ -28,7 +31,7 @@ func GetURI(filename string) string {
 func InitMongo() (*mongo.Client, *mongo.Collection) {
 	//Создаём нового клиента базы данных с поключением по указанному URL
 	client, err := mongo.NewClient(options.Client().
-		ApplyURI(GetURI("uri.txt")))
+		ApplyURI(GetURI(URI)))
 	if err != nil {
 		log.Fatal(err)
 	}

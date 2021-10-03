@@ -30,6 +30,9 @@ func main() {
 			continue
 		}
 
+		//получение времени запроса
+		now := update.Message.Time()
+		fmt.Println(now)
 		userId := update.Message.From.ID
 		msg := ""
 
@@ -57,6 +60,9 @@ func main() {
 				msg += PrintTodoList(AllTodoList(collection, userId))
 			case "all":
 				msg = PrintTodoList(AllTodoList(collection, userId))
+			case "deadline":
+				msg = "Напиши номер дела и дату." //сделать ввод даты выполнения с кнопки
+				flag = command
 			default:
 				msg = "<i>❗Неизвестная команда.</i>"
 			}
@@ -68,8 +74,16 @@ func main() {
 			msg = ToggleTodo(collection, userId, update.Message.Text)
 			msg += PrintTodoList(AllTodoList(collection, userId))
 			flag = ""
-		} else {
-			msg = AddTodo(collection, userId, update.Message.Text)
+		} else if flag == "deadline" {
+			//написать алгоритм действий
+			// сохранять время deadline в БД
+			//добавить команду добавления или изменения начала выполнения дела
+			// ПЕРЕПИСАТЬ и ОФОРМИТЬ В ФУ-ИЮ
+			msg = Deadline(collection, userId, update.Message.Text)
+			msg += PrintTodoList(AllTodoList(collection, userId))
+			flag = ""
+		} else { //добавление нового дела
+			msg = AddTodo(collection, userId, update.Message.Text, update.Message.Time())
 			msg += PrintTodoList(AllTodoList(collection, userId))
 		}
 		fmt.Println(collection)
