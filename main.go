@@ -31,8 +31,7 @@ func main() {
 		}
 
 		//получение времени запроса
-		now := update.Message.Time()
-		fmt.Println(now)
+		now := FormatTime(update.Message.Time())
 		userId := update.Message.From.ID
 		msg := ""
 
@@ -57,9 +56,9 @@ func main() {
 				flag = command
 			case "clean":
 				msg = CleanTodoList(collection, userId) //добавить возвращаемое значение в фу-ию CleanTodoList()
-				msg += PrintTodoList(AllTodoList(collection, userId))
+				msg += PrintTodoList(AllTodoList(collection, userId), now)
 			case "all":
-				msg = PrintTodoList(AllTodoList(collection, userId))
+				msg = PrintTodoList(AllTodoList(collection, userId), now)
 			case "deadline":
 				msg = "Напиши номер дела и дату." //сделать ввод даты выполнения с кнопки
 				flag = command
@@ -68,11 +67,11 @@ func main() {
 			}
 		} else if flag == "remove" {
 			msg = RemoveTodo(collection, userId, update.Message.Text)
-			msg += PrintTodoList(AllTodoList(collection, userId))
+			msg += PrintTodoList(AllTodoList(collection, userId), now)
 			flag = ""
 		} else if flag == "toggle" {
 			msg = ToggleTodo(collection, userId, update.Message.Text)
-			msg += PrintTodoList(AllTodoList(collection, userId))
+			msg += PrintTodoList(AllTodoList(collection, userId), now)
 			flag = ""
 		} else if flag == "deadline" {
 			//написать алгоритм действий
@@ -80,11 +79,11 @@ func main() {
 			//добавить команду добавления или изменения начала выполнения дела
 			// ПЕРЕПИСАТЬ и ОФОРМИТЬ В ФУ-ИЮ
 			msg = Deadline(collection, userId, update.Message.Text)
-			msg += PrintTodoList(AllTodoList(collection, userId))
+			msg += PrintTodoList(AllTodoList(collection, userId), now)
 			flag = ""
 		} else { //добавление нового дела
 			msg = AddTodo(collection, userId, update.Message.Text, update.Message.Time())
-			msg += PrintTodoList(AllTodoList(collection, userId))
+			msg += PrintTodoList(AllTodoList(collection, userId), now)
 		}
 		fmt.Println(collection)
 		msgParse := tgbotapi.NewMessage(update.Message.Chat.ID, msg)

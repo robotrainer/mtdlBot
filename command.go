@@ -12,21 +12,23 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-const layout = "02-Jan-2006"
+const layout = "2 Jan 2006 15:04"
 
 type Todo struct {
-	Userid    int
-	Title     string
-	Completed bool
-	StartTime string
+	Userid     int
+	Title      string
+	Completed  bool
+	StartTime  string
+	FinishTime string
 }
 
 func AddTodo(collection *mongo.Collection, userId int, message string, msgTime time.Time) string {
 	msg := ""
 	if message != "" {
 		startTime := FormatTime(msgTime)
+		finishTime := startTime
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		_, err := collection.InsertOne(ctx, Todo{userId, message, false, startTime})
+		_, err := collection.InsertOne(ctx, Todo{userId, message, false, startTime, finishTime})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -69,12 +71,11 @@ func ToggleTodo(collection *mongo.Collection, userId int, index string) string {
 		// filter["title"] = toggleTodo.Title
 		update := bson.M{"$set": bson.M{"completed": !toggleTodo.Completed}}
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		result, err := collection.UpdateOne(ctx, filter, update)
+		_, err := collection.UpdateOne(ctx, filter, update)
 		if err != nil {
 			log.Fatal(err)
 		}
 		msg = "<i>Статус дела изменён.\n\n</i>"
-		fmt.Printf("%v %v\n", result.MatchedCount, result.ModifiedCount)
 	} else {
 		msg = "<i>❗Такое дело не существует.\n\n</i>"
 	}
@@ -125,7 +126,7 @@ func AllTodoList(collection *mongo.Collection, userId int) []*Todo {
 
 func Deadline(collection *mongo.Collection, userId int, indexAndData string) string {
 	msg := ""
-	indexData := strings.Fields(indexAndData)
+	indexData := strings.Split(indexAndData, ". ")
 	index := indexData[0]
 	result, i := ValidityOfIndex(collection, userId, index)
 	if result {
@@ -143,10 +144,11 @@ func Deadline(collection *mongo.Collection, userId int, indexAndData string) str
 }
 
 // Выводить в сообщнеие статус срока выполнения дела
-func PrintTodoList(todoList []*Todo) string {
+func PrintTodoList(todoList []*Todo, timeNow string) string {
 	msg := "<b>MyTodoList</b>\n"
 	emoji := ""
 	title := ""
+	duration := ""
 	for i := 0; i < len(todoList); i++ {
 		if todoList[i].Completed {
 			emoji = "🟢"
@@ -155,7 +157,21 @@ func PrintTodoList(todoList []*Todo) string {
 			emoji = "🔴"
 			title = todoList[i].Title
 		}
-		msg += fmt.Sprintf("%s %v. %s\n", emoji, i+1, title)
+		Duration := GetDuration(todoList[i].StartTime, todoList[i].FinishTime)
+		DurationNow := GetDuration(timeNow, todoList[i].FinishTime)
+		PersentOfDuration := DurationNow / Duration
+		if PersentOfDuration <= 1 && PersentOfDuration > 0.75 {
+			duration = "🌕"
+		} else if PersentOfDuration <= 0.75 && PersentOfDuration > 0.5 {
+			duration = "🌔"
+		} else if PersentOfDuration <= 0.5 && PersentOfDuration > 0.25 {
+			duration = "🌓"
+		} else if PersentOfDuration <= 0.25 && PersentOfDuration > 0 {
+			duration = "🌒"
+		} else {
+			duration = "🌑"
+		}
+		msg += fmt.Sprintf("%s %s %v. %s\n", emoji, duration, i+1, title)
 	}
 	return msg
 }
@@ -188,11 +204,11 @@ func FormatTime(getTime time.Time) string {
 }
 
 //Добавить расчёт до окончания срока выполнения дела в разные периоды
-func GetDuration(startTime string, finishTime string) string {
+func GetDuration(startTime string, finishTime string) float64 {
 	start, _ := time.Parse(layout, startTime)
 	finish, _ := time.Parse(layout, finishTime)
 	duration := finish.Sub(start)
-	strDuration := fmt.Sprintf("%v", duration)
+	strDuration := duration.Minutes()
 	return strDuration
 }
 
