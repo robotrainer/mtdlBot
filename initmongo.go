@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	col = "todolist_test"
+	col = "todolist"
 	db  = "mtdlBot"
 	URI = "uri.txt"
 )
