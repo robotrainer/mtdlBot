@@ -38,12 +38,9 @@ func main() {
 		if update.Message.IsCommand() && flag == "" {
 			command := update.Message.Command()
 
-			//добавить команды /help и /settings
-			//настроить комманду /start
 			switch command {
 			case "start":
 				msg = fmt.Sprintf("Приветсвую тебя, %s! Я бот, который поможет тебе сохранять важные дела и следить за их выполнением. Пока у меня не много функций, но ты уже можешь начать пользоватьс мной. Чтобы узнать список доступных команды, введи команду /help.", update.Message.From.FirstName)
-				// добавить запоминание Chat.ID в базу данных
 			case "help":
 				msg = "Доступные команды:\nчтобы добавить дело, просто напиши его сообщением и отправ мне\n/all - показать ваш список дел\n/toggle - изменить статус указанного дела, меняет с невыполненного, на выполненное, и наоборот\n/remove - удалить указанное дело\n/clean - удалить все выполненные дела\n/start - запуск бота\n/help - справочная информация, руководство\n/settings - настроить чат-бот"
 			case "settings":
@@ -55,7 +52,7 @@ func main() {
 				msg = "Напишите номер дела."
 				flag = command
 			case "clean":
-				msg = CleanTodoList(collection, userId) //добавить возвращаемое значение в фу-ию CleanTodoList()
+				msg = CleanTodoList(collection, userId)
 				msg += PrintTodoList(AllTodoList(collection, userId), now)
 			case "all":
 				msg = PrintTodoList(AllTodoList(collection, userId), now)
@@ -74,10 +71,6 @@ func main() {
 			msg += PrintTodoList(AllTodoList(collection, userId), now)
 			flag = ""
 		} else if flag == "deadline" {
-			//написать алгоритм действий
-			// сохранять время deadline в БД
-			//добавить команду добавления или изменения начала выполнения дела
-			// ПЕРЕПИСАТЬ и ОФОРМИТЬ В ФУ-ИЮ
 			msg = Deadline(collection, userId, update.Message.Text)
 			msg += PrintTodoList(AllTodoList(collection, userId), now)
 			flag = ""

@@ -20,6 +20,7 @@ type Todo struct {
 	Completed  bool
 	StartTime  string
 	FinishTime string
+	Category   string
 }
 
 func AddTodo(collection *mongo.Collection, userId int, message string, msgTime time.Time) string {
@@ -28,7 +29,7 @@ func AddTodo(collection *mongo.Collection, userId int, message string, msgTime t
 		startTime := FormatTime(msgTime)
 		finishTime := startTime
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		_, err := collection.InsertOne(ctx, Todo{userId, message, false, startTime, finishTime})
+		_, err := collection.InsertOne(ctx, Todo{userId, message, false, startTime, finishTime, "Разное"})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -171,7 +172,11 @@ func PrintTodoList(todoList []*Todo, timeNow string) string {
 		} else {
 			duration = "🌑"
 		}
-		msg += fmt.Sprintf("%s %s %v. %s\n", emoji, duration, i+1, title)
+		finish := ""
+		if DurationNow > 0 {
+			finish = "\n<code>" + todoList[i].FinishTime + "</code>"
+		}
+		msg += fmt.Sprintf("%s %s %v. %s %s\n", emoji, duration, i+1, title, finish)
 	}
 	return msg
 }
@@ -203,7 +208,6 @@ func FormatTime(getTime time.Time) string {
 	return strTime
 }
 
-//Добавить расчёт до окончания срока выполнения дела в разные периоды
 func GetDuration(startTime string, finishTime string) float64 {
 	start, _ := time.Parse(layout, startTime)
 	finish, _ := time.Parse(layout, finishTime)
