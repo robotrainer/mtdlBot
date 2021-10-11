@@ -230,3 +230,32 @@ func ValidityOfIndex(collection *mongo.Collection, userId int, index string) (bo
 	}
 	return result, i
 }
+
+func CategoryTodoList(collection *mongo.Collection, Category string) []*Todo {
+	filter := bson.M{"category": Category}
+	// filter["userid"] = userId
+
+	var results []*Todo
+
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	cur, err := collection.Find(ctx, filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for cur.Next(ctx) {
+		var elem Todo
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, &elem)
+	}
+
+	if err := cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	cur.Close(ctx)
+	return results
+}

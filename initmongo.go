@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	col = "todolist"
-	db  = "mtdlBot"
-	URI = "uri.txt"
+	todoList = "todolist_test"
+	category = "category_test"
+	db       = "mtdlBot"
+	URI      = "uri.txt"
 )
 
 func GetURI(filename string) string {
@@ -28,7 +29,7 @@ func GetURI(filename string) string {
 	return uriRep
 }
 
-func InitMongo() (*mongo.Client, *mongo.Collection) {
+func InitMongo() (*mongo.Client, *mongo.Collection, *mongo.Collection) {
 	//Создаём нового клиента базы данных с поключением по указанному URL
 	client, err := mongo.NewClient(options.Client().
 		ApplyURI(GetURI(URI)))
@@ -52,7 +53,8 @@ func InitMongo() (*mongo.Client, *mongo.Collection) {
 		log.Fatal(err)
 	}
 
-	collection := client.Database(db).Collection(col)
+	collectionTodos := client.Database(db).Collection(todoList)
+	collectionCategory := client.Database(db).Collection(category)
 
-	return client, collection
+	return client, collectionTodos, collectionCategory
 }

@@ -8,7 +8,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-const token = "token.txt"
+const token = "token_test.txt"
 
 func GetToken(filename string) string {
 	token, err := ioutil.ReadFile(filename)
