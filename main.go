@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -15,15 +16,28 @@ type Categorys struct {
 
 var keyCategory = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
+		// tgbotapi.NewKeyboardButton("Выбрать категорию"),
+		tgbotapi.NewKeyboardButton("1"),
+		tgbotapi.NewKeyboardButton("2"),
+		tgbotapi.NewKeyboardButton("3"),
+		tgbotapi.NewKeyboardButton("4"),
+		tgbotapi.NewKeyboardButton("5"),
+		tgbotapi.NewKeyboardButton("6"),
+		tgbotapi.NewKeyboardButton("7"),
+		tgbotapi.NewKeyboardButton("8"),
+		tgbotapi.NewKeyboardButton("9"),
+	),
+	tgbotapi.NewKeyboardButtonRow(
+		// tgbotapi.NewKeyboardButton("Выбрать категорию"),
 		tgbotapi.NewKeyboardButton("Создать категорию"),
-		tgbotapi.NewKeyboardButton("Разное"),
+		tgbotapi.NewKeyboardButton("Удалить категорию"),
 	),
 )
 
 var keboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton("Все дела"),
-		tgbotapi.NewKeyboardButton("Категории"),
+		tgbotapi.NewKeyboardButton("Все дела категории"),
+		tgbotapi.NewKeyboardButton("Выбор категории"),
 	),
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Установить срок"),
@@ -47,12 +61,13 @@ func main() {
 
 	allUserId := GetAllUserId(collectionTodos, "userid") //Получить userid всех пользователей со списками дел для уведомлений.
 	//Сообщение об обновлении, отправляется один раз сразу после запуска сервера.
-	//При перезапуске сервера удалить строчку 22.
+	//При перезапуске сервера удалить строчку НИЖЕ.
 	// SendUpdateNotification(allUserId, bot)
 	//Отправка ежедневных уведоблений.
 	SendNotification(allUserId, bot)
 
 	flag := ""
+	nameCategory := "Разное"
 
 	for update := range updates {
 		if update.Message == nil {
@@ -83,35 +98,55 @@ func main() {
 			flag = getMessage
 		case "Удалить выполненные":
 			msg = CleanTodoList(collectionTodos, userId)
-			msg += PrintTodoList(AllTodoList(collectionTodos, userId), now)
-		case "Все дела":
-			msg = PrintTodoList(AllTodoList(collectionTodos, userId), now)
+			msg += PrintTodoList(AllTodoList(collectionTodos, userId, nameCategory), now)
+		case "Все дела категории":
+			msg = PrintTodoList(AllTodoList(collectionTodos, userId, nameCategory), now)
 		case "Установить срок":
 			msg = "Напиши номер дела и дату." //сделать ввод даты выполнения с кнопки?
 			flag = getMessage
-		case "Категории":
-			Msg := "Ваши категории:\n"
-			Msg += "└ Разное" //добавить считывание категорий из БД
+		case "Выбор категории":
+			// Msg := "Ваши категории:\n"
+			// Msg += "└ Разное" //добавить считывание категорий из БД
+			Msg := "Чтобы выбрать категорию, напишите её номер.\n"
+			Msg += PrintCategory(GetAllUserCategory(colCategory, userId))
 			m := tgbotapi.NewMessage(update.Message.Chat.ID, Msg)
+			m.ParseMode = tgbotapi.ModeHTML
 			m.ReplyMarkup = keyCategory
 			bot.Send(m)
 			flag = getMessage
+		// case "Выбрать категорию":
+		// 	msg = "Напишите номер категории"
+		// 	flag = getMessage
 		case "Создать категорию":
 			msg = "Напишите название новой категории."
 			flag = getMessage
+		case "Удалить категорию":
+			msg = "Напишите номер категории."
+			flag = getMessage
 		default:
 			if flag == "Удалить дело" {
-				msg = RemoveTodo(collectionTodos, userId, update.Message.Text)
-				msg += PrintTodoList(AllTodoList(collectionTodos, userId), now)
+				msg = RemoveTodo(collectionTodos, userId, update.Message.Text, nameCategory)
+				msg += PrintTodoList(AllTodoList(collectionTodos, userId, nameCategory), now)
 			} else if flag == "Изменить статус" {
-				msg = ToggleTodo(collectionTodos, userId, update.Message.Text)
-				msg += PrintTodoList(AllTodoList(collectionTodos, userId), now)
+				msg = ToggleTodo(collectionTodos, userId, update.Message.Text, nameCategory)
+				msg += PrintTodoList(AllTodoList(collectionTodos, userId, nameCategory), now)
 			} else if flag == "Установить срок" {
-				msg = Deadline(collectionTodos, userId, update.Message.Text)
-				msg += PrintTodoList(AllTodoList(collectionTodos, userId), now)
-			} else if flag == "Категории" {
-				category := update.Message.Text
-				msg = PrintTodoList(CategoryTodoList(collectionTodos, category), now)
+				msg = Deadline(collectionTodos, userId, update.Message.Text, nameCategory)
+				msg += PrintTodoList(AllTodoList(collectionTodos, userId, nameCategory), now)
+				// } else if flag == "Категории" {
+				// 	category := update.Message.Text
+				// 	msg = PrintTodoList(CategoryTodoList(collectionTodos, category), now)
+			} else if flag == "Выбор категории" {
+				indexCategory := update.Message.Text
+				result, i := ValidityOfIndex(colCategory, userId, indexCategory)
+				if result {
+					category := GetAllUserCategory(colCategory, userId)
+					nameCategory = category[i-1].Category
+					msg = fmt.Sprintf("Выбрана категория <b>%s</b>\n", nameCategory)
+					msg += PrintTodoList(AllTodoList(collectionTodos, userId, nameCategory), now)
+				} else {
+					msg = "<i>❗Такая категория не существует.\n\n</i>"
+				}
 			} else if flag == "Создать категорию" {
 				category := update.Message.Text
 				ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
@@ -120,9 +155,12 @@ func main() {
 					log.Fatal(err)
 				}
 				msg = "Категория создана."
+			} else if flag == "Удалить категорию" {
+				indexCategory := update.Message.Text
+				msg = RemoveCategory(colCategory, userId, indexCategory)
 			} else { //добавление нового дела
-				msg = AddTodo(collectionTodos, userId, update.Message.Text, update.Message.Time()) //добавлять дела оп категориям
-				msg += PrintTodoList(AllTodoList(collectionTodos, userId), now)
+				msg = AddTodo(collectionTodos, userId, update.Message.Text, nameCategory, update.Message.Time()) //добавлять дела оп категориям
+				msg += PrintTodoList(AllTodoList(collectionTodos, userId, nameCategory), now)
 			}
 			flag = ""
 			// msg = AddTodo(collectionTodos, userId, update.Message.Text, update.Message.Time())
