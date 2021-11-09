@@ -269,16 +269,21 @@ func PrintCategory(Category []*Categorys) string {
 }
 
 // Переписать функцию для удаления категории со всеми в ней делами
-func RemoveCategory(collection *mongo.Collection, userId int, index string) string {
+func RemoveCategory(colCategory *mongo.Collection, collection *mongo.Collection, userId int, index string) string {
 	// добавить проверку существования index дела
 	msg := ""
-	result, i := ValidityOfIndex(collection, userId, index)
+	result, i := ValidityOfIndex(colCategory, userId, index)
 	if result {
-		category := GetAllUserCategory(collection, userId)
+		category := GetAllUserCategory(colCategory, userId)
 		removeCategory := category[i-1].Category
 		filter := bson.M{"userid": userId, "category": removeCategory}
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		_, err := collection.DeleteOne(ctx, filter)
+		_, err := colCategory.DeleteOne(ctx, filter)
+		if err != nil {
+			log.Fatal(err)
+		}
+		ctx, _ = context.WithTimeout(context.Background(), 5*time.Second)
+		_, err = collection.DeleteMany(ctx, filter)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -157,7 +157,7 @@ func main() {
 				msg = "Категория создана."
 			} else if flag == "Удалить категорию" {
 				indexCategory := update.Message.Text
-				msg = RemoveCategory(colCategory, userId, indexCategory)
+				msg = RemoveCategory(colCategory, collectionTodos, userId, indexCategory)
 			} else { //добавление нового дела
 				msg = AddTodo(collectionTodos, userId, update.Message.Text, nameCategory, update.Message.Time()) //добавлять дела оп категориям
 				msg += PrintTodoList(AllTodoList(collectionTodos, userId, nameCategory), now)
