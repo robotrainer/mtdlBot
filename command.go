@@ -146,7 +146,10 @@ func Deadline(collection *mongo.Collection, userId int, indexAndData string, cat
 
 // Выводить в сообщнеие статус срока выполнения дела
 func PrintTodoList(todoList []*Todo, timeNow string) string {
-	msg := fmt.Sprintf("<b>MyTodoList</b>\nКатегория: <b>%s</b>\n", todoList[0].Category)
+	msg := "<b>MyTodoList</b>\n"
+	if len(todoList) != 0 {
+		msg += fmt.Sprintf("Категория: <b>%s</b>\n", todoList[0].Category)
+	}
 	emoji := ""
 	title := ""
 	duration := ""
@@ -276,18 +279,22 @@ func RemoveCategory(colCategory *mongo.Collection, collection *mongo.Collection,
 	if result {
 		category := GetAllUserCategory(colCategory, userId)
 		removeCategory := category[i-1].Category
-		filter := bson.M{"userid": userId, "category": removeCategory}
-		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		_, err := colCategory.DeleteOne(ctx, filter)
-		if err != nil {
-			log.Fatal(err)
+		if removeCategory != "Разное" {
+			filter := bson.M{"userid": userId, "category": removeCategory}
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			_, err := colCategory.DeleteOne(ctx, filter)
+			if err != nil {
+				log.Fatal(err)
+			}
+			ctx, _ = context.WithTimeout(context.Background(), 5*time.Second)
+			_, err = collection.DeleteMany(ctx, filter)
+			if err != nil {
+				log.Fatal(err)
+			}
+			msg = "<i>Категория удалена.\n\n</i>"
+		} else {
+			msg = "<i>❗Данную категорию нельзя удалить.</i>"
 		}
-		ctx, _ = context.WithTimeout(context.Background(), 5*time.Second)
-		_, err = collection.DeleteMany(ctx, filter)
-		if err != nil {
-			log.Fatal(err)
-		}
-		msg = "<i>Категория удалена.\n\n</i>"
 	} else {
 		msg = "<i>❗Такая категория не существует.\n\n</i>"
 	}

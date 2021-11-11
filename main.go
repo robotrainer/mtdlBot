@@ -84,8 +84,8 @@ func main() {
 		// 	command := update.Message.Command()
 
 		switch getMessage {
-		// case "start":
-		// 	msg = fmt.Sprintf("Приветсвую тебя, %s! Я бот, который поможет тебе сохранять важные дела и следить за их выполнением. Пока у меня не много функций, но ты уже можешь начать пользоватьс мной. Чтобы узнать список доступных команды, введи команду /help.", update.Message.From.FirstName)
+		case "/start":
+			msg = fmt.Sprintf("Приветсвую тебя, %s! Я бот, который поможет тебе сохранять важные дела и следить за их выполнением. Пока у меня не много функций, но ты уже можешь начать пользоватьс мной. Чтобы узнать список доступных команды, введи команду /help.", update.Message.From.FirstName)
 		// case "help":
 		// 	msg = "Доступные команды:\nчтобы добавить дело, просто напиши его сообщением и отправ мне\n/all - показать ваш список дел\n/toggle - изменить статус указанного дела, меняет с невыполненного, на выполненное, и наоборот\n/remove - удалить указанное дело\n/clean - удалить все выполненные дела\n/start - запуск бота\n/help - справочная информация, руководство\n/settings - настроить чат-бот"
 		// case "settings":
@@ -105,8 +105,6 @@ func main() {
 			msg = "Напиши номер дела и дату." //сделать ввод даты выполнения с кнопки?
 			flag = getMessage
 		case "Выбор категории":
-			// Msg := "Ваши категории:\n"
-			// Msg += "└ Разное" //добавить считывание категорий из БД
 			Msg := "Чтобы выбрать категорию, напишите её номер.\n"
 			Msg += PrintCategory(GetAllUserCategory(colCategory, userId))
 			m := tgbotapi.NewMessage(update.Message.Chat.ID, Msg)
@@ -114,9 +112,6 @@ func main() {
 			m.ReplyMarkup = keyCategory
 			bot.Send(m)
 			flag = getMessage
-		// case "Выбрать категорию":
-		// 	msg = "Напишите номер категории"
-		// 	flag = getMessage
 		case "Создать категорию":
 			msg = "Напишите название новой категории."
 			flag = getMessage
@@ -133,9 +128,6 @@ func main() {
 			} else if flag == "Установить срок" {
 				msg = Deadline(collectionTodos, userId, update.Message.Text, nameCategory)
 				msg += PrintTodoList(AllTodoList(collectionTodos, userId, nameCategory), now)
-				// } else if flag == "Категории" {
-				// 	category := update.Message.Text
-				// 	msg = PrintTodoList(CategoryTodoList(collectionTodos, category), now)
 			} else if flag == "Выбор категории" {
 				indexCategory := update.Message.Text
 				result, i := ValidityOfIndex(colCategory, userId, indexCategory)
@@ -158,14 +150,12 @@ func main() {
 			} else if flag == "Удалить категорию" {
 				indexCategory := update.Message.Text
 				msg = RemoveCategory(colCategory, collectionTodos, userId, indexCategory)
+				nameCategory = "Разное"
 			} else { //добавление нового дела
 				msg = AddTodo(collectionTodos, userId, update.Message.Text, nameCategory, update.Message.Time()) //добавлять дела оп категориям
 				msg += PrintTodoList(AllTodoList(collectionTodos, userId, nameCategory), now)
 			}
 			flag = ""
-			// msg = AddTodo(collectionTodos, userId, update.Message.Text, update.Message.Time())
-			// msg += PrintTodoList(AllTodoList(collectionTodos, userId), now)
-			// msg = "<i>❗Неизвестная команда.</i>"
 		}
 
 		msgParse := tgbotapi.NewMessage(update.Message.Chat.ID, msg)
