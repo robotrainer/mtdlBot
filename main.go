@@ -7,6 +7,8 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Categorys struct {
@@ -86,10 +88,17 @@ func main() {
 		switch getMessage {
 		case "/start":
 			msg = fmt.Sprintf("Приветсвую тебя, %s! Я бот, который поможет тебе сохранять важные дела и следить за их выполнением. Пока у меня не много функций, но ты уже можешь начать пользоватьс мной. Чтобы узнать список доступных команды, введи команду /help.", update.Message.From.FirstName)
-		// case "help":
-		// 	msg = "Доступные команды:\nчтобы добавить дело, просто напиши его сообщением и отправ мне\n/all - показать ваш список дел\n/toggle - изменить статус указанного дела, меняет с невыполненного, на выполненное, и наоборот\n/remove - удалить указанное дело\n/clean - удалить все выполненные дела\n/start - запуск бота\n/help - справочная информация, руководство\n/settings - настроить чат-бот"
-		// case "settings":
-		// 	msg = "Тут будут доступны настройки бота. Сейчас этот раздел в разработке."
+			update := bson.M{"$set": bson.M{"category": "Разное"}}
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			_, err := colCategory.UpdateOne(ctx, Categorys{userId, "Разное"}, update, options.Update().SetUpsert(true))
+			// _, err := colCategory.InsertOne(ctx, Categorys{userId, "Разное"})
+			if err != nil {
+				log.Fatal(err)
+			}
+		case "help":
+			msg = "Тут будет содержаться справка."
+		case "settings":
+			msg = "Тут будут доступны настройки бота. Сейчас этот раздел в разработке."
 		case "Удалить дело":
 			msg = "Напишите номер удаляемого дела."
 			flag = getMessage
@@ -141,12 +150,16 @@ func main() {
 				}
 			} else if flag == "Создать категорию" {
 				category := update.Message.Text
-				ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-				_, err := colCategory.InsertOne(ctx, Categorys{userId, category})
-				if err != nil {
-					log.Fatal(err)
+				if category != "Разное" && category != "разное" {
+					ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+					_, err := colCategory.InsertOne(ctx, Categorys{userId, category})
+					if err != nil {
+						log.Fatal(err)
+					}
+					msg = "Категория создана."
+				} else {
+					msg = "<i>❗Такая категорию уже существует.</i>"
 				}
-				msg = "Категория создана."
 			} else if flag == "Удалить категорию" {
 				indexCategory := update.Message.Text
 				msg = RemoveCategory(colCategory, collectionTodos, userId, indexCategory)
