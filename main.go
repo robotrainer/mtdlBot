@@ -66,7 +66,7 @@ func main() {
 	SendUpdateNotification(allUserId, bot)
 
 	//Отправка ежедневных уведоблений.
-	// SendNotification(allUserId, bot)
+	SendNotification(allUserId, bot)
 
 	flag := ""
 	nameCategory := "Разное"
@@ -108,7 +108,7 @@ func main() {
 		case "Все дела категории":
 			msg = PrintTodoList(AllTodoList(collectionTodos, userId, nameCategory), now)
 		case "Установить срок":
-			msg = "Напишите номер дела и дату.\nФормат ввода: <номер дела>. <число> <месяц на английском в сокращении> <год> <чч>:<мм>\nНапример: <b>3. 12 Dec 2021 17:35</b>" //сделать ввод даты выполнения с кнопки?
+			msg = "Напишите номер дела и дату.\nФормат ввода: \"номер дела\". \"число\" \"месяц на англ. в сокращении\" \"год\" \"чч\":\"мм\"\nНапример --> <b>3. 12 Dec 2021 17:35</b>" //сделать ввод даты выполнения с кнопки?
 			flag = getMessage
 		case "Выбор категории":
 			Msg := "Чтобы выбрать категорию, напишите её номер.\n"
